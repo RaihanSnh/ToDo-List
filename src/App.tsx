@@ -13,9 +13,11 @@ import {
     ModalHeader,
     ModalOverlay, useColorMode,
     useDisclosure,
-    useToast
+    useToast,
+    InputGroup,
+    InputLeftElement
 } from "@chakra-ui/react";
-import {AiFillEdit, AiOutlinePlus, BsCheck2, BsFillMoonFill, BsTrashFill, MdCancel} from "react-icons/all";
+import {AiFillEdit, AiOutlinePlus, BsCheck2, BsFillMoonFill, BsTrashFill, MdCancel, AiOutlineSearch} from "react-icons/all";
 import {ChangeEvent, useEffect, useRef, useState} from "react";
 
 function App() {
@@ -75,29 +77,58 @@ function App() {
 
     const {toggleColorMode } = useColorMode()
 
+    const [search, setSearch] = useState("");
+    const [searchResults, setSearchResults] = useState(todos);
+
+    const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearch(event.target.value);
+    };    
+
+    useEffect(() => {
+        const results = todos.filter(todo =>
+            todo.text.toLowerCase().includes(search.toLowerCase())
+        );
+        setSearchResults(results);
+    }, [todos, search]);
+
+
     return (
         <Box>
-            <Modal isOpen={isOpen} onClose={onClose}>
-                <ModalOverlay/>
-                <ModalContent>
-                    <ModalHeader>
-                        Tugas Baru
-                        <ModalCloseButton/>
-                    </ModalHeader>
-                    <ModalBody pb={8}>
-                        <Box mb={6}>
-                            <Input type={"text"} placeholder={"Deskripsikan tugas"} ref={createInputRef}/>
-                        </Box>
-                        <Button w={"full"} colorScheme={"blue"} onClick={handleCreate}>
-                            Buat
-                        </Button>
-                    </ModalBody>
-                </ModalContent>
-            </Modal>
-            <Box px={4} py={2} mb={2}>
-                <Heading textAlign={"center"}>Todo List</Heading>
-            </Box>
-            <Flex justifyContent={"right"} mb={4} px={2} gap={2}>
+        <Modal isOpen={isOpen} onClose={onClose}>
+            <ModalOverlay/>
+            <ModalContent>
+                <ModalHeader>
+                    Tugas Baru
+                    <ModalCloseButton/>
+                </ModalHeader>
+                <ModalBody pb={8}>
+                    <Box mb={6}>
+                        <Input type={"text"} placeholder={"Deskripsikan tugas"} ref={createInputRef}/>
+                    </Box>
+                    <Button w={"full"} colorScheme={"blue"} onClick={handleCreate}>
+                        Buat
+                    </Button>
+                </ModalBody>
+            </ModalContent>
+        </Modal>
+        <Box px={4} py={2} mb={2}>
+            <Heading textAlign={"center"}>Todo List</Heading>
+        </Box>
+        <Flex justifyContent={"space-between"} mb={4} px={2} gap={2}>
+            <InputGroup>
+                <InputLeftElement
+                    pointerEvents="none"
+                    children={<AiOutlineSearch color="gray.300" />}
+                />
+                <Input 
+                    type="text" 
+                    placeholder="Cari tugas" 
+                    onChange={handleSearch}
+                    focusBorderColor="blue.500"
+                    _placeholder={{ color: "gray.500" }}
+                />
+            </InputGroup>
+            <Flex>
                 <Button colorScheme={"blue"} size={"sm"}
                         onClick={toggleColorMode}>
                     <Icon as={BsFillMoonFill} w={5} h={5}/>
@@ -107,15 +138,16 @@ function App() {
                     Tambahkan
                 </Button>
             </Flex>
-            <Box px={2}>
-                <Flex gap={2} flexDirection={"column"}>
-                    {todos.map((a, b) => {
-                        return <Todo key={b} id={b} todo={a} setTodos={setTodos} todos={todos}/>
-                    })}
-                    {todos.length === 0 && <Box textAlign={"center"} fontSize={"2xl"}>Tidak ada tugas</Box>}
-                </Flex>
-            </Box>
+        </Flex>
+        <Box px={2}>
+            <Flex gap={2} flexDirection={"column"}>
+                {searchResults.map((a, b) => {
+                    return <Todo key={b} id={b} todo={a} setTodos={setTodos} todos={todos}/>
+                })}
+                {searchResults.length === 0 && <Box textAlign={"center"} fontSize={"2xl"}>Tidak ada tugas</Box>}
+            </Flex>
         </Box>
+    </Box>
     );
 }
 
@@ -197,8 +229,7 @@ function Todo(props: TodoProps) {
     const [isEditing, setIsEditing] = useState(false);
 
     return (
-        <>
-            <Flex rounded={"lg"} px={4} py={2} border={"1px"} borderColor={"gray.800"} _dark={{borderColor: "gray.50"}} alignItems={"center"} gap={1}>
+        <Flex rounded={"lg"} px={4} py={2} border={"1px"} borderColor={"gray.800"} _dark={{borderColor: "gray.50"}} alignItems={"center"} gap={1}>
                 <Checkbox onChange={onChange} isChecked={checked} mx={1}/>
                 <Box flex={"auto"} fontWeight={"semibold"} fontSize={"lg"}>
                     {!isEditing && <Box wordBreak={"break-all"}>{props.todo.text}</Box>}
@@ -225,7 +256,6 @@ function Todo(props: TodoProps) {
                         </Button>
                     </>}
             </Flex>
-        </>
     );
 }
 
