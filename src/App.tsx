@@ -15,39 +15,40 @@ import {
     useDisclosure,
     useToast,
     InputGroup,
-    InputLeftElement
+    InputLeftElement,
+    Spacer
 } from "@chakra-ui/react";
 import {AiFillEdit, AiOutlinePlus, BsCheck2, BsFillMoonFill, BsTrashFill, MdCancel, AiOutlineSearch} from "react-icons/all";
 import {ChangeEvent, useEffect, useRef, useState} from "react";
 
 function App() {
-    const [todos, _setTodos] = useState<TodoEntry[]>([]);
-    const [_nextId, setNextId] = useState<number>(0);
+    const [todos, setTodos] = useState<TodoEntry[]>([]);
+    const [nextId, setNextId] = useState<number>(0);
 
     useEffect(() => {
         const todos = localStorage.getItem("todos_list");
         if (todos === null) {
             return;
         }
-        _setTodos(JSON.parse(todos));
+        setTodos(JSON.parse(todos));
 
         const nextId = localStorage.getItem("todo_next_id");
         if (nextId === null) {
             return;
         }
         setNextId(parseInt(nextId));
-    });
+    }, []);
 
-    const setTodos = (todos: TodoEntry[]) => {
+    const saveTodos = (todos: TodoEntry[]) => {
         localStorage.setItem("todos_list", JSON.stringify(todos));
-        _setTodos(todos);
+        setTodos(todos);
     }
 
-    const nextId = () => {
-        const v = _nextId + 1;
-        localStorage.setItem("todo_next_id", v.toString());
-        setNextId(_nextId + 1);
-        return v;
+    const generateNextId = () => {
+        const id = nextId + 1;
+        localStorage.setItem("todo_next_id", id.toString());
+        setNextId(id);
+        return id;
     }
 
     const {isOpen, onOpen, onClose} = useDisclosure();
@@ -59,19 +60,18 @@ function App() {
         if (createInput === undefined || createInput === null) {
             return;
         }
-        // @ts-ignore
-        const text = createInput.value;
+        const text = createInput;
         if (text === "") {
             return;
         }
 
-        todos.push({
-            id: nextId(),
+        const newTodo = {
+            id: generateNextId(),
             text: text,
             success: false,
             createdAt: new Date()
-        });
-        setTodos(todos);
+        };
+        saveTodos([...todos, newTodo]);
         onClose();
     }
 
@@ -128,11 +128,12 @@ function App() {
                     _placeholder={{ color: "gray.500" }}
                 />
             </InputGroup>
-            <Flex>
+            <Flex gap={2}>
                 <Button colorScheme={"blue"} size={"sm"}
                         onClick={toggleColorMode}>
                     <Icon as={BsFillMoonFill} w={5} h={5}/>
                 </Button>
+                <Spacer />
                 <Button colorScheme={"blue"} size={"sm"} leftIcon={<Icon as={AiOutlinePlus} w={5} h={5}/>}
                         onClick={onOpen}>
                     Tambahkan
@@ -141,8 +142,8 @@ function App() {
         </Flex>
         <Box px={2}>
             <Flex gap={2} flexDirection={"column"}>
-                {searchResults.map((a, b) => {
-                    return <Todo key={b} id={b} todo={a} setTodos={setTodos} todos={todos}/>
+                {searchResults.map((todo, index) => {
+                    return <Todo key={index} id={index} todo={todo} todos={todos} setTodos={saveTodos}/>
                 })}
                 {searchResults.length === 0 && <Box textAlign={"center"} fontSize={"2xl"}>Tidak ada tugas</Box>}
             </Flex>
@@ -162,7 +163,7 @@ interface TodoProps {
     id: number
     todo: TodoEntry
     todos: TodoEntry[]
-    setTodos: any
+    setTodos: (todos: TodoEntry[]) => void
 }
 
 function Todo(props: TodoProps) {
@@ -173,6 +174,11 @@ function Todo(props: TodoProps) {
     const [checked, setChecked] = useState(props.todo.success);
 
     const onChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const updatedTodo = {...props.todo, success: e.target.checked};
+        const updatedTodos = props.todos.map(todo => todo.id === props.todo.id ? updatedTodo : todo);
+        props.setTodos(updatedTodos);
+        setChecked(e.target.checked);
+
         if (e.target.checked) {
             toast({
                 description: <Box>Tugas <Box as={"span"} fontWeight={"bold"}>{props.todo.text}</Box> telah ditandai
@@ -183,22 +189,11 @@ function Todo(props: TodoProps) {
                 position: isMobile ? "bottom" : "top-right",
             })
         }
-
-        const todos = props.todos;
-        todos[todos.indexOf(props.todo)].success = e.target.checked;
-        props.setTodos(todos);
-        setChecked(e.target.checked);
     }
 
     const onDelete = () => {
-        const todos = props.todos;
-        const newTodos: TodoEntry[] = [];
-        todos.forEach((t) => {
-            if (t.id !== props.todo.id) {
-                newTodos.push(t)
-            }
-        });
-        props.setTodos(newTodos)
+        const updatedTodos = props.todos.filter(todo => todo.id !== props.todo.id);
+        props.setTodos(updatedTodos);
         toast({
             description: <Box>Tugas <Box as={"span"} fontWeight={"bold"}>{props.todo.text}</Box> telah dihapus</Box>,
             status: "warning",
@@ -215,14 +210,13 @@ function Todo(props: TodoProps) {
         if (editInput === undefined || editInput === null) {
             return;
         }
-        // @ts-ignore
-        const text = editInput.value;
+        const text = editInput;
         if (text === "") {
             return;
         }
-        const todos = props.todos;
-        todos[props.id].text = text;
-        props.setTodos(todos);
+        const updatedTodo = {...props.todo, text};
+        const updatedTodos = props.todos.map(todo => todo.id === props.todo.id ? updatedTodo : todo);
+        props.setTodos(updatedTodos);
         setIsEditing(false);
     }
 
