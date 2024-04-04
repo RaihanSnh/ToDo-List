@@ -54,27 +54,33 @@ function App() {
     const {isOpen, onOpen, onClose} = useDisclosure();
 
     const createInputRef = useRef(null);
+    const dateInputRef = useRef(null); // Menambahkan ref untuk input tanggal
 
     const handleCreate = () => {
         const createInput = createInputRef.current;
-        if (createInput === undefined || createInput === null) {
+        const dateInput = dateInputRef.current;
+    
+        if (createInput === undefined || createInput === null || dateInput === undefined || dateInput === null) {
             return;
         }
-        const text = createInput;
-        if (text === "") {
+        const text = createInput.value; // Mengambil nilai dari input teks
+        const dueDate = new Date(dateInput.value); // Mengubah nilai tanggal menjadi objek Date
+    
+        if (text === "" || isNaN(dueDate.getTime())) { // Mengecek apakah tanggal valid
             return;
         }
-
+    
         const newTodo = {
             id: generateNextId(),
             text: text,
+            dueDate: dueDate, // Menyimpan dueDate sebagai objek Date
             success: false,
             createdAt: new Date()
         };
         saveTodos([...todos, newTodo]);
         onClose();
     }
-
+    
     const {toggleColorMode } = useColorMode()
 
     const [search, setSearch] = useState("");
@@ -95,22 +101,25 @@ function App() {
     return (
         <Box>
         <Modal isOpen={isOpen} onClose={onClose}>
-            <ModalOverlay/>
-            <ModalContent>
-                <ModalHeader>
-                    Tugas Baru
-                    <ModalCloseButton/>
-                </ModalHeader>
-                <ModalBody pb={8}>
-                    <Box mb={6}>
-                        <Input type={"text"} placeholder={"Deskripsikan tugas"} ref={createInputRef}/>
-                    </Box>
-                    <Button w={"full"} colorScheme={"blue"} onClick={handleCreate}>
-                        Buat
-                    </Button>
-                </ModalBody>
-            </ModalContent>
-        </Modal>
+        <ModalOverlay />
+        <ModalContent>
+            <ModalHeader>
+                Tugas Baru
+                <ModalCloseButton />
+            </ModalHeader>
+            <ModalBody pb={8}>
+                <Box mb={6}>
+                    <Input type={"text"} placeholder={"Deskripsikan tugas"} ref={createInputRef} />
+                </Box>
+                <Box mb={6}>
+                    <Input type={"date"} placeholder={"Pilih Tanggal"} ref={dateInputRef} />
+                </Box>
+                <Button w={"full"} colorScheme={"blue"} onClick={handleCreate}>
+                    Buat
+                </Button>
+            </ModalBody>
+        </ModalContent>
+    </Modal>
         <Box px={4} py={2} mb={2}>
             <Heading textAlign={"center"}>Todo List</Heading>
         </Box>
@@ -155,6 +164,7 @@ function App() {
 interface TodoEntry {
     id: number
     text: string
+    dueDate: Date // Menambahkan properti dueDate
     success: boolean
     createdAt: Date
 }
@@ -204,17 +214,20 @@ function Todo(props: TodoProps) {
     }
 
     const editInputRef = useRef(null);
+    const dateInputRef = useRef(null);
 
     const onEdit = () => {
         const editInput = editInputRef.current;
-        if (editInput === undefined || editInput === null) {
+        const dateInput = dateInputRef.current; // Ambil nilai dari input tanggal
+        if (editInput === undefined || editInput === null || dateInput === undefined || dateInput === null) {
             return;
         }
         const text = editInput;
-        if (text === "") {
+        const dueDate = dateInput; // Ambil nilai tanggal
+        if (text === "" || dueDate === "") {
             return;
         }
-        const updatedTodo = {...props.todo, text};
+        const updatedTodo = { ...props.todo, text, dueDate: new Date(dueDate) }; // Perbarui dueDate juga
         const updatedTodos = props.todos.map(todo => todo.id === props.todo.id ? updatedTodo : todo);
         props.setTodos(updatedTodos);
         setIsEditing(false);
@@ -226,9 +239,21 @@ function Todo(props: TodoProps) {
         <Flex rounded={"lg"} px={4} py={2} border={"1px"} borderColor={"gray.800"} _dark={{borderColor: "gray.50"}} alignItems={"center"} gap={1}>
                 <Checkbox onChange={onChange} isChecked={checked} mx={1}/>
                 <Box flex={"auto"} fontWeight={"semibold"} fontSize={"lg"}>
-                    {!isEditing && <Box wordBreak={"break-all"}>{props.todo.text}</Box>}
-                    {isEditing && <Input type={"text"} size={"sm"} fontSize={"lg"} fontWeight={"semibold"} rounded={"xl"} defaultValue={props.todo.text} ref={editInputRef}/>}
-                </Box>
+                    {!isEditing && (
+                        <Box>
+                            <Box wordBreak={"break-all"}>{props.todo.text}</Box>
+                            <Box fontSize={"sm"} color={"gray.500"}>
+                                Due Date: {props.todo.dueDate ? props.todo.dueDate.toLocaleDateString() : '-'}
+                            </Box>
+                        </Box>
+                    )}
+                {isEditing && (
+                    <Flex direction={"column"} gap={2}>
+                        <Input type={"text"} size={"sm"} fontSize={"lg"} fontWeight={"semibold"} rounded={"xl"} defaultValue={props.todo.text} ref={editInputRef} />
+                        <Input type={"date"} size={"sm"} fontSize={"lg"} fontWeight={"semibold"} rounded={"xl"} defaultValue={props.todo.dueDate} ref={dateInputRef} />
+                    </Flex>
+                )}
+            </Box>
                 {!isEditing &&
                     <>
                         <Button size={"sm"} colorScheme={"red"} onClick={onDelete}>
