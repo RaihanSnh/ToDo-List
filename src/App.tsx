@@ -56,32 +56,48 @@ function App() {
     const createInputRef = useRef<HTMLInputElement>(null);
     const dateInputRef = useRef<HTMLInputElement>(null);
 
+    const toast = useToast();
+
     const handleCreate = () => {
-        const createInput = createInputRef.current;
-        const dateInput = dateInputRef.current;
-        if (createInput === null || dateInput === null) {
-          return;
-        }
-        const text = createInput.value;
-        const dueDate = new Date(dateInput.value);
-        if (text === "") {
-          alert("Silakan masukkan deskripsi tugas.");
-          return;
-        }
-        if (isNaN(dueDate.getTime())) {
-          alert("Silakan pilih tanggal due date.");
-          return;
-        }
-        const newTodo: TodoEntry = {
-          id: generateNextId(),
-          text: text,
-          dueDate: dueDate,
-          success: false,
-          createdAt: new Date(),
-        };
-        saveTodos([...todos, newTodo]);
-        onClose();
-      };
+    const createInput = createInputRef.current;
+    const dateInput = dateInputRef.current;
+    if (createInput === null || dateInput === null) {
+        return;
+    }
+    const text = createInput.value;
+    const dueDate = new Date(dateInput.value);
+    if (text === "") {
+        toast({
+        title: "Deskripsi Tugas Kosong",
+        description: "Silakan masukkan deskripsi tugas.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "top",
+        });
+        return;
+    }
+    if (isNaN(dueDate.getTime())) {
+        toast({
+        title: "Tanggal Tenggat Tidak Valid",
+        description: "Silakan pilih tanggal tenggat.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "top",
+        });
+        return;
+    }
+    const newTodo: TodoEntry = {
+        id: generateNextId(),
+        text: text,
+        dueDate: dueDate,
+        success: false,
+        createdAt: new Date(),
+    };
+    saveTodos([...todos, newTodo]);
+    onClose();
+    };
     
     const {toggleColorMode } = useColorMode()
 
@@ -216,24 +232,26 @@ function Todo(props: TodoProps) {
     }
 
     const editInputRef = useRef<HTMLInputElement>(null);
-    const editDateInputRef = useRef<HTMLInputElement>(null);
+    const dateInputRef = useRef<HTMLInputElement>(null);
 
     const onEdit = () => {
         const editInput = editInputRef.current;
-        const dateInput = editDateInputRef.current;
+        const dateInput = dateInputRef.current;
         if (editInput === null || dateInput === null) {
           return;
         }
         const text = editInput.value;
         const dueDate = new Date(dateInput.value);
         if (text === "" || isNaN(dueDate.getTime())) {
-            return;
+          return;
         }
         const updatedTodo = { ...props.todo, text, dueDate };
-        const updatedTodos = props.todos.map(todo => todo.id === props.todo.id ? updatedTodo : todo);
+        const updatedTodos = props.todos.map((todo) =>
+          todo.id === props.todo.id ? updatedTodo : todo
+        );
         props.setTodos(updatedTodos);
         setIsEditing(false);
-    }
+      };
     
     const [isEditing, setIsEditing] = useState(false);
 
@@ -249,8 +267,8 @@ function Todo(props: TodoProps) {
                     <Box>
                         <Box wordBreak={"break-all"}>{props.todo.text}</Box>
                         <Box fontSize={"sm"} color={"gray.500"}>
-                            Due Date: {typeof props.todo.dueDate === 'string' ? props.todo.dueDate : new Date(props.todo.dueDate).toLocaleDateString()}
-                        </Box>
+                            Tenggat: {formatDate(new Date(props.todo.dueDate))}
+                            </Box>
                     </Box>
                 )}
                 {isEditing && (
