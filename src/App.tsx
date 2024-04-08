@@ -53,33 +53,35 @@ function App() {
 
     const {isOpen, onOpen, onClose} = useDisclosure();
 
-    const createInputRef = useRef(null);
-    const dateInputRef = useRef(null); // Menambahkan ref untuk input tanggal
+    const createInputRef = useRef<HTMLInputElement>(null);
+    const dateInputRef = useRef<HTMLInputElement>(null);
 
     const handleCreate = () => {
         const createInput = createInputRef.current;
         const dateInput = dateInputRef.current;
-    
-        if (createInput === undefined || createInput === null || dateInput === undefined || dateInput === null) {
-            return;
+        if (createInput === null || dateInput === null) {
+          return;
         }
-        const text = createInput.value; // Mengambil nilai dari input teks
-        const dueDate = new Date(dateInput.value); // Mengubah nilai tanggal menjadi objek Date
-    
-        if (text === "" || isNaN(dueDate.getTime())) { // Mengecek apakah tanggal valid
-            return;
+        const text = createInput.value;
+        const dueDate = new Date(dateInput.value);
+        if (text === "") {
+          alert("Silakan masukkan deskripsi tugas.");
+          return;
         }
-    
-        const newTodo = {
-            id: generateNextId(),
-            text: text,
-            dueDate: dueDate, // Menyimpan dueDate sebagai objek Date
-            success: false,
-            createdAt: new Date()
+        if (isNaN(dueDate.getTime())) {
+          alert("Silakan pilih tanggal due date.");
+          return;
+        }
+        const newTodo: TodoEntry = {
+          id: generateNextId(),
+          text: text,
+          dueDate: dueDate,
+          success: false,
+          createdAt: new Date(),
         };
         saveTodos([...todos, newTodo]);
         onClose();
-    }
+      };
     
     const {toggleColorMode } = useColorMode()
 
@@ -164,7 +166,7 @@ function App() {
 interface TodoEntry {
     id: number
     text: string
-    dueDate: Date // Menambahkan properti dueDate
+    dueDate: Date | number
     success: boolean
     createdAt: Date
 }
@@ -213,44 +215,48 @@ function Todo(props: TodoProps) {
         })
     }
 
-    const editInputRef = useRef(null);
-    const dateInputRef = useRef(null);
+    const editInputRef = useRef<HTMLInputElement>(null);
+    const editDateInputRef = useRef<HTMLInputElement>(null);
 
     const onEdit = () => {
         const editInput = editInputRef.current;
-        const dateInput = dateInputRef.current; // Ambil nilai dari input tanggal
-        if (editInput === undefined || editInput === null || dateInput === undefined || dateInput === null) {
+        const dateInput = editDateInputRef.current;
+        if (editInput === null || dateInput === null) {
+          return;
+        }
+        const text = editInput.value;
+        const dueDate = new Date(dateInput.value);
+        if (text === "" || isNaN(dueDate.getTime())) {
             return;
         }
-        const text = editInput;
-        const dueDate = dateInput; // Ambil nilai tanggal
-        if (text === "" || dueDate === "") {
-            return;
-        }
-        const updatedTodo = { ...props.todo, text, dueDate: new Date(dueDate) }; // Perbarui dueDate juga
+        const updatedTodo = { ...props.todo, text, dueDate };
         const updatedTodos = props.todos.map(todo => todo.id === props.todo.id ? updatedTodo : todo);
         props.setTodos(updatedTodos);
         setIsEditing(false);
     }
-
+    
     const [isEditing, setIsEditing] = useState(false);
+
+    const formatDate = (date: Date) => {
+        return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+      };
 
     return (
         <Flex rounded={"lg"} px={4} py={2} border={"1px"} borderColor={"gray.800"} _dark={{borderColor: "gray.50"}} alignItems={"center"} gap={1}>
                 <Checkbox onChange={onChange} isChecked={checked} mx={1}/>
                 <Box flex={"auto"} fontWeight={"semibold"} fontSize={"lg"}>
-                    {!isEditing && (
-                        <Box>
-                            <Box wordBreak={"break-all"}>{props.todo.text}</Box>
-                            <Box fontSize={"sm"} color={"gray.500"}>
-                                Due Date: {props.todo.dueDate ? props.todo.dueDate.toLocaleDateString() : '-'}
-                            </Box>
+                {!isEditing && (
+                    <Box>
+                        <Box wordBreak={"break-all"}>{props.todo.text}</Box>
+                        <Box fontSize={"sm"} color={"gray.500"}>
+                            Due Date: {typeof props.todo.dueDate === 'string' ? props.todo.dueDate : new Date(props.todo.dueDate).toLocaleDateString()}
                         </Box>
-                    )}
+                    </Box>
+                )}
                 {isEditing && (
                     <Flex direction={"column"} gap={2}>
                         <Input type={"text"} size={"sm"} fontSize={"lg"} fontWeight={"semibold"} rounded={"xl"} defaultValue={props.todo.text} ref={editInputRef} />
-                        <Input type={"date"} size={"sm"} fontSize={"lg"} fontWeight={"semibold"} rounded={"xl"} defaultValue={props.todo.dueDate} ref={dateInputRef} />
+                        <Input type={"date"} size={"sm"} fontSize={"lg"} fontWeight={"semibold"} rounded={"xl"} defaultValue={formatDate(new Date(props.todo.dueDate))} ref={dateInputRef}/>
                     </Flex>
                 )}
             </Box>
