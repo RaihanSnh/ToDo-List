@@ -117,14 +117,14 @@ function App() {
 
 
     return (
-        <Box>
-        <Modal isOpen={isOpen} onClose={onClose}>
+    <Box>
+    <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
         <ModalContent>
-            <ModalHeader>
-                Tugas Baru
-                <ModalCloseButton />
-            </ModalHeader>
+                <ModalHeader>
+                    Tugas Baru
+                    <ModalCloseButton />
+                </ModalHeader>
             <ModalBody pb={8}>
                 <Box mb={6}>
                     <Input type={"text"} placeholder={"Deskripsikan tugas"} ref={createInputRef} />
@@ -156,12 +156,12 @@ function App() {
                 />
             </InputGroup>
             <Flex gap={2}>
-                <Button colorScheme={"blue"} size={"sm"}
+                <Button colorScheme={"blue"} size={"md"}
                         onClick={toggleColorMode}>
                     <Icon as={BsFillMoonFill} w={5} h={5}/>
                 </Button>
                 <Spacer />
-                <Button colorScheme={"blue"} size={"sm"} leftIcon={<Icon as={AiOutlinePlus} w={5} h={5}/>}
+                <Button colorScheme={"blue"} size={"md"} leftIcon={<Icon as={AiOutlinePlus} w={5} h={5}/>}
                         onClick={onOpen}>
                     Tambahkan
                 </Button>
